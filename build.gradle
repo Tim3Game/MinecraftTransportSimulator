@@ -49,11 +49,15 @@ shadowJar {
     exclude 'dummyThing'
 }
 
-dependencies {
+repositories {
+    maven { url = "http://maven.cil.li/" }
+}
 
+dependencies {
 	compile group: 'com.googlecode.soundlibs', name: 'vorbisspi', version: '1.0.3.3'
 	compile group: 'com.googlecode.soundlibs', name: 'mp3spi', version: '1.9.5.4'
     compile group: 'com.googlecode.soundlibs', name: 'basicplayer', version: '3.0.0.0'
+    deobfCompile "li.cil.oc:OpenComputers:MC1.12.2-1.7.5.+:api"
 }
 
 
@@ -68,4 +72,8 @@ processResources {
     from(sourceSets.main.resources.srcDirs) {
         exclude 'mcmod.info'
     }
+}
+
+sourceSets {
+    main { output.resourcesDir = output.classesDir }
 }

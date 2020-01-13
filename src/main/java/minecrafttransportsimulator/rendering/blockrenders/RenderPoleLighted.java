@@ -109,8 +109,8 @@ public class RenderPoleLighted extends TileEntitySpecialRenderer<TileEntityPoleA
 	
 	private void renderTrafficSignal(TileEntityPoleAttachment signal, Vec3i facingVec, float lightBrightness){
 		//Render the lights for the traffic signal.  What lights we render depends on the controller state.
-		final boolean shouldFlash;
-		final Color lightColor;
+		boolean shouldFlash;
+		Color lightColor;
 		final long worldTime = signal.getWorld().getTotalWorldTime();
 		BlockPos signalPos = signal.getPos();
 		
@@ -140,113 +140,144 @@ public class RenderPoleLighted extends TileEntitySpecialRenderer<TileEntityPoleA
 				//We are valid, now check to see if we are still part of the controller.
 				if(controller.trafficSignalLocations.contains(signalPos)){
 					//Valid controller detected, do logic.
-					shouldFlash = false;
-					final boolean isOnMainAxis = !(controller.orientedOnX ^ (facingVec.getX() != 0));
+					if (controller.mode == 0) {
+						shouldFlash = true;
+						lightColor = Color.YELLOW;
+					} else {
+						shouldFlash = false;
+						final boolean isOnMainAxis = !(controller.orientedOnX ^ (facingVec.getX() != 0));
 
-					if(controller.operationIndex == 0){
-						//First step, main light turns green, cross light stays red.
-						//If we are a signal-controlled light, we stay here until we get a signal.
-						//If we are a timed light, we immediately move to state 1 as our
-						//green time is an extra state to enable looping.
-						lightColor = isOnMainAxis ? Color.GREEN : Color.RED;
-						if(controller.triggerMode){
-							//Only check every two seconds to prevent lag.
-							if(worldTime%40 == 0){
-								//Get a bounding box for all lights in the controller system.
-								int minX = Integer.MAX_VALUE;
-								int maxX = Integer.MIN_VALUE;
-								int minZ = Integer.MAX_VALUE;
-								int maxZ = Integer.MIN_VALUE;
-								for(BlockPos controllerSignalPos : controller.trafficSignalLocations){
-									minX = Math.min(minX, controllerSignalPos.getX());
-									maxX = Math.max(maxX, controllerSignalPos.getX());
-									minZ = Math.min(minX, controllerSignalPos.getZ());
-									maxZ = Math.max(maxX, controllerSignalPos.getZ());
-								}
-								
-								//Take 10 off to expand the detection boxes for the axis.
-								if(controller.orientedOnX){
-									minZ -= 10;
-									maxZ += 10;
-								}else{
-									minX -= 10;
-									maxX += 10;
-								}
-								
-								//Now we have min-max, check for any vehicles in the area.
-								//We need to check along the non-primary axis.
-								for(Entity entity : controller.getWorld().loadedEntityList){
-									if(entity instanceof EntityVehicleG_Car){
-										if(controller.orientedOnX){
-											if((entity.posZ > minZ && entity.posZ < minZ + (maxZ - minZ)/2F) || (entity.posZ < maxZ && entity.posZ > maxZ - (maxZ - minZ)/2F)){
-												if(entity.posX > minX && entity.posX < maxX){
-													controller.timeOperationStarted = worldTime;
-													controller.operationIndex = 1;
-												}
+						switch (controller.operationIndex) {
+							case 0: {
+								//First step, main light turns green, cross light stays red.
+								//If we are a signal-controlled light, we stay here until we get a signal.
+								//If we are a timed light, we immediately move to state 1 as our
+								//green time is an extra state to enable looping.
+								lightColor = isOnMainAxis ? Color.GREEN : Color.RED;
+								switch (controller.mode) {
+									case 1: {
+										controller.timeOperationStarted = worldTime;
+										controller.operationIndex = 1;
+										break;
+									}
+									case 2: {
+										//Only check every two seconds to prevent lag.
+										if (worldTime % 40 == 0) {
+											//Get a bounding box for all lights in the controller system.
+											int minX = Integer.MAX_VALUE;
+											int maxX = Integer.MIN_VALUE;
+											int minZ = Integer.MAX_VALUE;
+											int maxZ = Integer.MIN_VALUE;
+											for (BlockPos controllerSignalPos : controller.trafficSignalLocations) {
+												minX = Math.min(minX, controllerSignalPos.getX());
+												maxX = Math.max(maxX, controllerSignalPos.getX());
+												minZ = Math.min(minX, controllerSignalPos.getZ());
+												maxZ = Math.max(maxX, controllerSignalPos.getZ());
 											}
-										}else{
-											if((entity.posX > minX && entity.posX < minX + (maxX - minX)/2F) || (entity.posX < maxX && entity.posX > maxX - (maxX - minX)/2F)){
-												if(entity.posZ > minZ && entity.posZ < maxZ){
-													controller.timeOperationStarted = worldTime;
-													controller.operationIndex = 1;
+
+											//Take 10 off to expand the detection boxes for the axis.
+											if (controller.orientedOnX) {
+												minZ -= 10;
+												maxZ += 10;
+											} else {
+												minX -= 10;
+												maxX += 10;
+											}
+
+											//Now we have min-max, check for any vehicles in the area.
+											//We need to check along the non-primary axis.
+											for (Entity entity : controller.getWorld().loadedEntityList) {
+												if (entity instanceof EntityVehicleG_Car) {
+													if (controller.orientedOnX) {
+														if ((entity.posZ > minZ && entity.posZ < minZ + (maxZ - minZ) / 2F) || (entity.posZ < maxZ && entity.posZ > maxZ - (maxZ - minZ) / 2F)) {
+															if (entity.posX > minX && entity.posX < maxX) {
+																controller.timeOperationStarted = worldTime;
+																controller.operationIndex = 1;
+															}
+														}
+													} else {
+														if ((entity.posX > minX && entity.posX < minX + (maxX - minX) / 2F) || (entity.posX < maxX && entity.posX > maxX - (maxX - minX) / 2F)) {
+															if (entity.posZ > minZ && entity.posZ < maxZ) {
+																controller.timeOperationStarted = worldTime;
+																controller.operationIndex = 1;
+															}
+														}
+													}
 												}
 											}
 										}
+										break;
 									}
 								}
+								break;
 							}
-						}else{
-							controller.timeOperationStarted = worldTime;
-							controller.operationIndex = 1;
-						}
-					}else if(controller.operationIndex == 1){
-						//Second step, main light turns yellow, cross light stays red.
-						lightColor = isOnMainAxis ? Color.YELLOW : Color.RED;
-						if(controller.timeOperationStarted + controller.yellowTime <= worldTime){
-							controller.timeOperationStarted = worldTime;
-							controller.operationIndex = 2;
-						}
-					}else if(controller.operationIndex == 2){
-						//Third step, main light turns red, cross light stays red.
-						lightColor = Color.RED;
-						if(controller.timeOperationStarted + controller.allRedTime <= worldTime){
-							controller.timeOperationStarted = worldTime;
-							controller.operationIndex = 3;
-						}
-					}else if(controller.operationIndex == 3){
-						//Fourth step, main light stays red, cross light turns green.
-						lightColor = isOnMainAxis ? Color.RED : Color.GREEN;
-						if(controller.timeOperationStarted + controller.greenCrossTime <= worldTime){
-							controller.timeOperationStarted = worldTime;
-							controller.operationIndex = 4;
-						}
-					}else if(controller.operationIndex == 4){
-						//Fifth step, main light stays red, cross light turns yellow.
-						lightColor = isOnMainAxis ? Color.RED : Color.YELLOW;
-						if(controller.timeOperationStarted + controller.yellowTime <= worldTime){
-							controller.timeOperationStarted = worldTime;
-							controller.operationIndex = 5;
-						}
-					}else if(controller.operationIndex == 5){
-						//Sixth step, main light stays red, cross light turns red.
-						lightColor = Color.RED;
-						if(controller.timeOperationStarted + controller.allRedTime <= worldTime){
-							controller.timeOperationStarted = worldTime;
-							//If we are a triggered light, we go back to 0.
-							//Otherwise, we perform another cycle and go back to 1.
-							if(controller.triggerMode){
-								controller.operationIndex = 0;
-							}else{
-								controller.timeOperationStarted = worldTime;
-								controller.operationIndex = 6;
+							case 1: {
+								//Second step, main light turns yellow, cross light stays red.
+								lightColor = isOnMainAxis ? Color.YELLOW : Color.RED;
+								if(controller.timeOperationStarted + controller.yellowTime <= worldTime){
+									controller.timeOperationStarted = worldTime;
+									controller.operationIndex = 2;
+								}
+								break;
 							}
-						}
-					}else{
-						//Sixth step, main light turns green, cross light stays red.
-						lightColor = isOnMainAxis ? Color.GREEN : Color.RED;
-						if(controller.timeOperationStarted + controller.greenMainTime <= worldTime){
-							controller.timeOperationStarted = worldTime;
-							controller.operationIndex = 0;
+							case 2: {
+								//Third step, main light turns red, cross light stays red.
+								lightColor = Color.RED;
+								if(controller.timeOperationStarted + controller.allRedTime <= worldTime){
+									controller.timeOperationStarted = worldTime;
+									controller.operationIndex = 3;
+								}
+								break;
+							}
+							case 3: {
+								//Fourth step, main light stays red, cross light turns green.
+								lightColor = isOnMainAxis ? Color.RED : Color.GREEN;
+								if(controller.blinkingGreen && controller.timeOperationStarted + controller.greenCrossTime - 35 <= worldTime && !isOnMainAxis)
+									shouldFlash = true;
+								if(controller.timeOperationStarted + controller.greenCrossTime <= worldTime){
+									shouldFlash = false;
+									controller.timeOperationStarted = worldTime;
+									controller.operationIndex = 4;
+								}
+								break;
+							}
+							case 4: {
+								//Fifth step, main light stays red, cross light turns yellow.
+								lightColor = isOnMainAxis ? Color.RED : Color.YELLOW;
+								if(controller.timeOperationStarted + controller.yellowTime <= worldTime){
+									controller.timeOperationStarted = worldTime;
+									controller.operationIndex = 5;
+								}
+								break;
+							}
+							case 5: {
+								//Sixth step, main light stays red, cross light turns red.
+								lightColor = Color.RED;
+								if(controller.timeOperationStarted + controller.allRedTime <= worldTime){
+									controller.timeOperationStarted = worldTime;
+									//If we are a triggered light, we go back to 0.
+									//Otherwise, we perform another cycle and go back to 1.
+									if(controller.mode == 2){
+										controller.operationIndex = 0;
+									}else{
+										controller.timeOperationStarted = worldTime;
+										controller.operationIndex = 6;
+									}
+								}
+								break;
+							}
+							default: {
+								//Sixth step, main light turns green, cross light stays red.
+								lightColor = isOnMainAxis ? Color.GREEN : Color.RED;
+								if(controller.blinkingGreen && controller.timeOperationStarted + controller.greenMainTime - 35 <= worldTime && isOnMainAxis)
+									shouldFlash = true;
+								if(controller.timeOperationStarted + controller.greenMainTime <= worldTime){
+									shouldFlash = false;
+									controller.timeOperationStarted = worldTime;
+									controller.operationIndex = 0;
+								}
+								break;
+							}
 						}
 					}
 				}else{

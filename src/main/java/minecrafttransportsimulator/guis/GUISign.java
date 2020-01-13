@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.minecraft.client.gui.GuiListExtended;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraftforge.fml.client.GuiScrollingList;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
@@ -23,7 +26,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ResourceLocation;
 
 public class GUISign extends GuiScreen{
-	private static final ResourceLocation background = new ResourceLocation(MTS.MODID, "textures/guis/crafting.png");	
+	private static final ResourceLocation background = new ResourceLocation(MTS.MODID, "textures/guis/sign_designer.png");
 	private final EntityPlayer player;
 	private final TileEntityPoleSign sign;
 	private final TileEntityPoleSign signTemp;
@@ -35,6 +38,8 @@ public class GUISign extends GuiScreen{
 	private GuiButton rightSignButton;
 	private GuiButton startButton;
 	private GuiButton textButton;
+
+	// private GuiListExtended signsList;
 	
 	private int guiLeft;
 	private int guiTop;
@@ -77,6 +82,8 @@ public class GUISign extends GuiScreen{
 			signTextBoxes.add(new GuiTextField(0, fontRenderer, guiLeft + 9, guiTop + 54 + i*10, 125, 10));
 			signTextBoxes.get(i).setEnabled(false);
 		}
+
+		// signsList = new GuiListExtended(mc, 50, 50, guiLeft + 190, guiTop + 188, 50);
 	}
 	
 	@Override
@@ -95,7 +102,8 @@ public class GUISign extends GuiScreen{
 		//Render the text headers.
 		drawCenteredString(!packName.isEmpty() ? I18n.format("itemGroup." + packName) : "", guiLeft + 130, guiTop + 10);
 		drawCenteredString(!signName.isEmpty() ? I18n.format("sign." + packName + "." + signName.substring(signName.indexOf(':') + 1) + ".name") : "", guiLeft + 130, guiTop + 30);
-		
+		// signsList.drawScreen(guiLeft + 5, guiTop + 5, renderPartialTicks);
+
 		//Set button states and render.
 		startButton.enabled = !signName.isEmpty();
 		leftPackButton.enabled = !prevPackName.isEmpty();
