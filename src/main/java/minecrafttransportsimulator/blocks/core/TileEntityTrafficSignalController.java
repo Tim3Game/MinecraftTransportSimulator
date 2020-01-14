@@ -7,6 +7,8 @@ import li.cil.oc.api.machine.Arguments;
 import li.cil.oc.api.machine.Callback;
 import li.cil.oc.api.machine.Context;
 import li.cil.oc.api.network.SimpleComponent;
+import minecrafttransportsimulator.MTS;
+import minecrafttransportsimulator.packets.tileentities.PacketTrafficSignalControllerChange;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.common.Optional;
@@ -72,7 +74,7 @@ public class TileEntityTrafficSignalController extends TileEntityBase implements
 
     @Override
     public String getComponentName() {
-        return "tsc";
+        return "tlightcontrl";
     }
 
     /* Getter */
@@ -123,43 +125,59 @@ public class TileEntityTrafficSignalController extends TileEntityBase implements
 
     @Callback//(doc = "function(boolean):boolean; Set if the primary axis is X. Returns true on success", direct = true)
     @Optional.Method(modid = "opencomputers")
+    public Object[] confirmChanges(Context context, Arguments args) {
+        System.out.println("confirmChanges");
+        MTS.MTSNet.sendToServer(new PacketTrafficSignalControllerChange(this));
+        return new Object[] { true };
+    }
+
+    @Callback//(doc = "function(boolean):boolean; Set if the primary axis is X. Returns true on success", direct = true)
+    @Optional.Method(modid = "opencomputers")
     public Object[] setPrimaryAxisX(Context context, Arguments args) {
-        return new Object[] { args.isBoolean(0) ? orientedOnX = args.checkBoolean(0) : false };
+        System.out.println("setPrimaryAxisX");
+        return new Object[] {args.isBoolean(0) && (orientedOnX = args.checkBoolean(0))};
     }
 
     @Callback//(doc = "function(int):boolean; Set in what mode it currently will be", direct = true)
     @Optional.Method(modid = "opencomputers")
     public Object[] setMode(Context context, Arguments args) {
+        System.out.println("setMode");
+        System.out.println(args.isInteger(0) ? mode = args.checkInteger(0) : false);
         return new Object[] { args.isInteger(0) ? mode = args.checkInteger(0) : false };
     }
 
     @Callback//(doc = "function(boolean):boolean; Set if lights will blink green before switching to yellow. Returns true on success", direct = true)
     @Optional.Method(modid = "opencomputers")
     public Object[] shouldGreenBlink(Context context, Arguments args) {
-        return new Object[] { args.isBoolean(0) ? blinkingGreen = args.checkBoolean(0) : false };
+        System.out.println("shouldGreenBlink");
+        return new Object[] {args.isBoolean(0) && (blinkingGreen = args.checkBoolean(0))};
     }
 
     @Callback
     @Optional.Method(modid = "opencomputers")
     public Object[] setGreenMainTime(Context context, Arguments args) {
+        System.out.println("setGreenMainTime");
         return new Object[] { args.isInteger(0) ? greenMainTime = args.checkInteger(0) : false };
     }
 
     @Callback
     @Optional.Method(modid = "opencomputers")
     public Object[] setGreenCrossTime(Context context, Arguments args) {
+        System.out.println("setGreenCrossTime");
         return new Object[] { args.isInteger(0) ? greenCrossTime = args.checkInteger(0) : false };
     }
 
     @Callback
     @Optional.Method(modid = "opencomputers")
     public Object[] setYellowTime(Context context, Arguments args) {
+        System.out.println("setYellowTime");
         return new Object[] { args.isInteger(0) ? yellowTime = args.checkInteger(0) : false };
     }
 
     @Callback
     @Optional.Method(modid = "opencomputers")
     public Object[] setAllRedTime(Context context, Arguments args) {
+        System.out.println("setAllRedTime");
         return new Object[] { args.isInteger(0) ? allRedTime = args.checkInteger(0) : false };
     }
 }

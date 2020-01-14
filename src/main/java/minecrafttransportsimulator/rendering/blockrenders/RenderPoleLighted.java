@@ -192,14 +192,24 @@ public class RenderPoleLighted extends TileEntitySpecialRenderer<TileEntityPoleA
 														if ((entity.posZ > minZ && entity.posZ < minZ + (maxZ - minZ) / 2F) || (entity.posZ < maxZ && entity.posZ > maxZ - (maxZ - minZ) / 2F)) {
 															if (entity.posX > minX && entity.posX < maxX) {
 																controller.timeOperationStarted = worldTime;
-																controller.operationIndex = 1;
+																if(controller.blinkingGreen && controller.timeOperationStarted + controller.greenCrossTime - 35 <= worldTime && !isOnMainAxis)
+																	shouldFlash = true;
+																else {
+																	shouldFlash = false;
+																	controller.operationIndex = 1;
+																}
 															}
 														}
 													} else {
 														if ((entity.posX > minX && entity.posX < minX + (maxX - minX) / 2F) || (entity.posX < maxX && entity.posX > maxX - (maxX - minX) / 2F)) {
 															if (entity.posZ > minZ && entity.posZ < maxZ) {
 																controller.timeOperationStarted = worldTime;
-																controller.operationIndex = 1;
+																if(controller.blinkingGreen && controller.timeOperationStarted + controller.greenCrossTime - 35 <= worldTime && !isOnMainAxis)
+																	shouldFlash = true;
+																else {
+																	shouldFlash = false;
+																	controller.operationIndex = 1;
+																}
 															}
 														}
 													}
