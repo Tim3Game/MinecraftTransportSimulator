@@ -4,7 +4,6 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
-import com.google.common.collect.Lists;
 import minecrafttransportsimulator.dataclasses.MTSRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
