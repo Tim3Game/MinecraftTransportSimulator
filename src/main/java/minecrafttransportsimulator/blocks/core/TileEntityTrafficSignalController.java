@@ -74,48 +74,53 @@ public class TileEntityTrafficSignalController extends TileEntityBase implements
 
     @Override
     public String getComponentName() {
-        return "tlightcontrl";
+        return "iv_signalcntlr"; // INFO: Max length is 14 chars
     }
 
     /* Getter */
 
-    @Callback//(doc = "function():boolean; Returns if the primary axis is X", direct = true)
+    @Callback(doc = "function():boolean; Returns if the primary axis is X", direct = true)
     @Optional.Method(modid = "opencomputers")
     public Object[] isPrimaryAxisX(Context context, Arguments args) {
         return new Object[] { orientedOnX };
     }
 
-    @Callback//(doc = "function():int; Returns in what mode it currently is", direct = true)
+    @Callback(doc = "function():int; Returns what mode is currently set. (0 - DISABLED, 1 - TIMED, 2 - VEHICLE TRIGGER)", direct = true)
     @Optional.Method(modid = "opencomputers")
     public Object[] getMode(Context context, Arguments args) {
         return new Object[] { mode };
     }
 
-    @Callback//(doc = "function():boolean; Returns if lights will blink green before switching to yellow", direct = true)
+    @Callback(doc = "function():string; Returns the name of what mode it's currently set.", direct = true)
+    @Optional.Method(modid = "opencomputers")
+    public Object[] getModeName(Context context, Arguments args) {
+        return new Object[] { mode == 1 ? "TIMED": mode == 2 ? "VEHICLE_TRIGGER" : "DISABLED" };
+    }
+
+    @Callback(doc = "function():boolean; Returns if lights will blink green before switching to yellow", direct = true)
     @Optional.Method(modid = "opencomputers")
     public Object[] willGreenBlink(Context context, Arguments args) {
         return new Object[] { blinkingGreen };
     }
 
-    @Callback
+    @Callback(doc = "function():int; Returns how long is main signal in green (in ticks)", direct = true)
     @Optional.Method(modid = "opencomputers")
     public Object[] getGreenMainTime(Context context, Arguments args) {
         return new Object[] { greenMainTime };
     }
 
-    @Callback
-    @Optional.Method(modid = "opencomputers")
+    @Callback(doc = "function():int; Returns how long is cross signal in green (in ticks)", direct = true)
     public Object[] getGreenCrossTime(Context context, Arguments args) {
         return new Object[] { greenCrossTime };
     }
 
-    @Callback
+    @Callback(doc = "function():int; Returns how long are all signals yellow (in ticks)", direct = true)
     @Optional.Method(modid = "opencomputers")
     public Object[] getYellowTime(Context context, Arguments args) {
         return new Object[] { yellowTime };
     }
 
-    @Callback
+    @Callback(doc = "function():int; Returns how long are all signals red (in ticks)", direct = true)
     @Optional.Method(modid = "opencomputers")
     public Object[] getAllRedTime(Context context, Arguments args) {
         return new Object[] { allRedTime };
@@ -123,58 +128,54 @@ public class TileEntityTrafficSignalController extends TileEntityBase implements
 
     /* Setters */
 
-    @Callback//(doc = "function(boolean):boolean; Set if the primary axis is X. Returns true on success", direct = true)
+    @Callback(doc = "function(boolean):boolean; This will save all changes to the Traffic Signal Controller. You need to do this when you want to save all changes !", direct = true)
     @Optional.Method(modid = "opencomputers")
     public Object[] confirmChanges(Context context, Arguments args) {
-        System.out.println("confirmChanges");
         MTS.MTSNet.sendToServer(new PacketTrafficSignalControllerChange(this));
         return new Object[] { true };
     }
 
-    @Callback//(doc = "function(boolean):boolean; Set if the primary axis is X. Returns true on success", direct = true)
+    @Callback(doc = "function(boolean):boolean; Set if the primary axis is X. Returns true on success", direct = true)
     @Optional.Method(modid = "opencomputers")
     public Object[] setPrimaryAxisX(Context context, Arguments args) {
-        System.out.println("setPrimaryAxisX");
-        return new Object[] {args.isBoolean(0) && (orientedOnX = args.checkBoolean(0))};
+        orientedOnX = args.isBoolean(0) && args.checkBoolean(0);
+        return new Object[] { orientedOnX };
     }
 
-    @Callback//(doc = "function(int):boolean; Set in what mode it currently will be", direct = true)
+    @Callback(doc = "function(int):boolean; Set signal mode. (0 - DISABLED, 1 - TIMED, 2 - VEHICLE TRIGGER)", direct = true)
     @Optional.Method(modid = "opencomputers")
     public Object[] setMode(Context context, Arguments args) {
-        System.out.println("setMode");
-        System.out.println(args.isInteger(0) ? mode = args.checkInteger(0) : false);
         return new Object[] { args.isInteger(0) ? mode = args.checkInteger(0) : false };
     }
 
-    @Callback//(doc = "function(boolean):boolean; Set if lights will blink green before switching to yellow. Returns true on success", direct = true)
+    @Callback(doc = "function(boolean):boolean; Set if lights should blink green before switching to yellow. Returns true on success and false if mode is DISABLED (0) or VEHICLE_TRIGGER (2)", direct = true)
     @Optional.Method(modid = "opencomputers")
     public Object[] shouldGreenBlink(Context context, Arguments args) {
-        System.out.println("shouldGreenBlink");
-        return new Object[] {args.isBoolean(0) && (blinkingGreen = args.checkBoolean(0))};
+        blinkingGreen = (args.isBoolean(0) && mode == 1) && args.checkBoolean(0);
+        return new Object[] { blinkingGreen };
     }
 
-    @Callback
+    @Callback(doc = "function(int):boolean; Set the time main signal is Green. Returns true on success", direct = true)
     @Optional.Method(modid = "opencomputers")
     public Object[] setGreenMainTime(Context context, Arguments args) {
-        System.out.println("setGreenMainTime");
         return new Object[] { args.isInteger(0) ? greenMainTime = args.checkInteger(0) : false };
     }
 
-    @Callback
+    @Callback(doc = "function(int):boolean; Set the time cross signal is Green. Returns true on success", direct = true)
     @Optional.Method(modid = "opencomputers")
     public Object[] setGreenCrossTime(Context context, Arguments args) {
         System.out.println("setGreenCrossTime");
         return new Object[] { args.isInteger(0) ? greenCrossTime = args.checkInteger(0) : false };
     }
 
-    @Callback
+    @Callback(doc = "function(int):boolean; Set the time all signals are Yellow. Returns true on success", direct = true)
     @Optional.Method(modid = "opencomputers")
     public Object[] setYellowTime(Context context, Arguments args) {
         System.out.println("setYellowTime");
         return new Object[] { args.isInteger(0) ? yellowTime = args.checkInteger(0) : false };
     }
 
-    @Callback
+    @Callback(doc = "function(int):boolean; Set the time all signals are Red. Returns true on success", direct = true)
     @Optional.Method(modid = "opencomputers")
     public Object[] setAllRedTime(Context context, Arguments args) {
         System.out.println("setAllRedTime");

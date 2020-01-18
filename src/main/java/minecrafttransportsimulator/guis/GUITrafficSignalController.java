@@ -133,10 +133,13 @@ public class GUITrafficSignalController extends GuiScreen{
 			modeButton.drawButton(mc, mouseX, mouseY, 0);
 
 			//Blinking Green
-			fontRenderer.drawStringWithShadow(I18n.format("gui.trafficsignalcontroller.blinkingGreen"), guiLeft + 30, guiTop + 105, Color.WHITE.getRGB());
-			blinkingGreenButton.enabled = true;
-			blinkingGreenButton.displayString = I18n.format("gui.trafficsignalcontroller." + (blinkingGreen ? "enabled" : "disabled"));
-			blinkingGreenButton.drawButton(mc, mouseX, mouseY, 0);
+			//INFO: Disabled of not working blinking in Vehicle Trigger
+			if(mode == 1) {
+				fontRenderer.drawStringWithShadow(I18n.format("gui.trafficsignalcontroller.blinkingGreen"), guiLeft + 30, guiTop + 105, Color.WHITE.getRGB());
+				blinkingGreenButton.enabled = true;
+				blinkingGreenButton.displayString = I18n.format("gui.trafficsignalcontroller." + (blinkingGreen ? "enabled" : "disabled"));
+				blinkingGreenButton.drawButton(mc, mouseX, mouseY, 0);
+			}
 			
 			//Green time
 			if(mode == 1) {
@@ -204,6 +207,7 @@ public class GUITrafficSignalController extends GuiScreen{
 			orientedOnX = !orientedOnX;
 		}else if(buttonClicked.equals(modeButton)){
 			mode = mode >= 2 ? 0 : mode+1;
+			if (mode == 2) blinkingGreen = false;
 		}else if(buttonClicked.equals(blinkingGreenButton)){
 			blinkingGreen = !blinkingGreen;
 		}else if(buttonClicked.equals(confirmButton)){

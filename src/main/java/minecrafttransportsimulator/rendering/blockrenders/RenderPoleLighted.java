@@ -106,11 +106,11 @@ public class RenderPoleLighted extends TileEntitySpecialRenderer<TileEntityPoleA
 
 	private static final Map<BlockPos, BlockPos> trafficSignalControllers = new HashMap<BlockPos, BlockPos>();
 	private static final Map<BlockPos, Integer> checkIndexList = new HashMap<BlockPos, Integer>();
-	
+
 	private void renderTrafficSignal(TileEntityPoleAttachment signal, Vec3i facingVec, float lightBrightness){
 		//Render the lights for the traffic signal.  What lights we render depends on the controller state.
 		boolean shouldFlash;
-		Color lightColor;
+		final Color lightColor;
 		final long worldTime = signal.getWorld().getTotalWorldTime();
 		BlockPos signalPos = signal.getPos();
 		
@@ -141,6 +141,7 @@ public class RenderPoleLighted extends TileEntitySpecialRenderer<TileEntityPoleA
 				if(controller.trafficSignalLocations.contains(signalPos)){
 					//Valid controller detected, do logic.
 					if (controller.mode == 0) {
+						//If mode is set to DISABLED
 						shouldFlash = true;
 						lightColor = Color.YELLOW;
 					} else {
@@ -189,27 +190,56 @@ public class RenderPoleLighted extends TileEntitySpecialRenderer<TileEntityPoleA
 											for (Entity entity : controller.getWorld().loadedEntityList) {
 												if (entity instanceof EntityVehicleG_Car) {
 													if (controller.orientedOnX) {
+														System.out.println("controller.orientedOnX");
 														if ((entity.posZ > minZ && entity.posZ < minZ + (maxZ - minZ) / 2F) || (entity.posZ < maxZ && entity.posZ > maxZ - (maxZ - minZ) / 2F)) {
 															if (entity.posX > minX && entity.posX < maxX) {
 																controller.timeOperationStarted = worldTime;
-																if(controller.blinkingGreen && controller.timeOperationStarted + controller.greenCrossTime - 35 <= worldTime && !isOnMainAxis)
+																controller.operationIndex = 1;
+																/* TODO: Fix this operationIndex to get blinking on Vehicle Trigger working
+																// shouldFlash = true;
+																System.out.println(shouldFlash);
+																if(controller.blinkingGreen && !shouldFlash && !isOnMainAxis) {
 																	shouldFlash = true;
-																else {
+																	controller.timeOperationStarted = worldTime;
+																}
+																System.out.println(controller.timeOperationStarted + " " + Long.sum(controller.timeOperationStarted,120L) + " " + worldTime + " " + shouldFlash);
+																if(Long.sum(controller.timeOperationStarted,120L) <= worldTime){
 																	shouldFlash = false;
+																	controller.timeOperationStarted = worldTime;
 																	controller.operationIndex = 1;
 																}
+																/*
+																if (controller.blinkingGreen) {
+																	System.out.println("controller.blinkingGreen - " + shouldFlash + " - " + controller.timeOperationStarted);
+
+
+																	if (!shouldFlash) {
+																		System.out.println("!shouldFlash");
+																		controller.timeOperationStarted = worldTime;
+																		System.out.println("2. " + shouldFlash);
+																		shouldFlash = true;
+																		System.out.println("3. " + shouldFlash);
+																	} else {
+																		System.out.println("!shouldFlash - else");
+																		if(controller.timeOperationStarted + controller.greenCrossTime - 35 <= worldTime && !isOnMainAxis) {
+																			shouldFlash = false;
+																			controller.operationIndex = 1;
+																		}
+																	}
+																} else {
+																	System.out.println("controller.blinkingGreen - else");
+																	controller.timeOperationStarted = worldTime;
+																	controller.operationIndex = 1;
+																}
+															*/
 															}
 														}
 													} else {
+														System.out.println("controller.orientedOnX - else");
 														if ((entity.posX > minX && entity.posX < minX + (maxX - minX) / 2F) || (entity.posX < maxX && entity.posX > maxX - (maxX - minX) / 2F)) {
 															if (entity.posZ > minZ && entity.posZ < maxZ) {
 																controller.timeOperationStarted = worldTime;
-																if(controller.blinkingGreen && controller.timeOperationStarted + controller.greenCrossTime - 35 <= worldTime && !isOnMainAxis)
-																	shouldFlash = true;
-																else {
-																	shouldFlash = false;
-																	controller.operationIndex = 1;
-																}
+																controller.operationIndex = 1;
 															}
 														}
 													}
@@ -290,22 +320,22 @@ public class RenderPoleLighted extends TileEntitySpecialRenderer<TileEntityPoleA
 							}
 						}
 					}
-				}else{
+				} else {
 					trafficSignalControllers.remove(signalPos);
 					shouldFlash = true;
 					lightColor = Color.RED;
 				}
-			}else{
+			} else {
 				trafficSignalControllers.remove(signalPos);
 				shouldFlash = true;
 				lightColor = Color.RED;
 			}
-		}else{
+		} else {
 			shouldFlash = true;
 			lightColor = Color.RED;
 		}
 
-		if(!shouldFlash || (shouldFlash && (worldTime%20 < 10))){
+		if (!shouldFlash || (shouldFlash && (worldTime%20 < 10))) {
 			GL11.glTranslatef(0, lightColor.equals(Color.RED) ? 13F/16F : (lightColor.equals(Color.YELLOW) ? 8F/16F : 3F/16F), 0.225F);
 			renderLightedSquare(4F/16F, lightBrightness, lightColor);
 		}
