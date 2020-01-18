@@ -7,8 +7,12 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+
+import javax.annotation.Nullable;
 
 public class BlockTrafficSignalController extends ABlockRotatable implements ITileEntityProvider{
 	
@@ -35,5 +39,10 @@ public class BlockTrafficSignalController extends ABlockRotatable implements ITi
 	@Override
 	public TileEntityTrafficSignalController createNewTileEntity(World worldIn, int meta){
 		return new TileEntityTrafficSignalController();
+	}
+
+	@Override
+	public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos) {
+		return super.getBoundingBox(state, source, pos);
 	}
 }
