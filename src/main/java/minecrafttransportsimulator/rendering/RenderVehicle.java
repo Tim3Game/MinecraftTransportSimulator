@@ -474,10 +474,10 @@ public final class RenderVehicle extends Render<EntityVehicleE_Powered>{
 	
 	private static float getTranslationLengthForModelVariable(EntityVehicleE_Powered vehicle, String variable, float partialTicks){
 		switch(variable){
-			case("door"): return vehicle.parkingBrakeAngle/30;
+			case("door"): return vehicle.parkingBrakeAngle/30F;
 			case("throttle"): return vehicle.throttle/100F;
 			case("brake"): return vehicle.brakeOn ? 1 : 0;
-			case("p_brake"): return vehicle.parkingBrakeAngle/30;
+			case("p_brake"): return vehicle.parkingBrakeAngle/30F;
 			case("horn"): return vehicle.hornOn ? 1 : 0;
 			case("trailer"): return ((EntityVehicleF_Ground) vehicle).towingAngle/30F;
 			case("hookup"): return ((EntityVehicleF_Ground) vehicle).towedByVehicle != null ? ((EntityVehicleF_Ground) vehicle).towedByVehicle.towingAngle/30F : 0;
@@ -551,16 +551,26 @@ public final class RenderVehicle extends Render<EntityVehicleE_Powered>{
     			partLightLists.put(partModelLocation, lightParts);
     		}else{
     			//If we aren't using the vehicle texture, bind the texture for this part.
+    			//Otherwise, bind the vehicle texture as it may have been un-bound prior to this.
     			if(!part.pack.general.useVehicleTexture){
     				if(!textureMap.containsKey(part.partName)){
         				textureMap.put(part.partName, part.getTextureLocation());
         			}
     				minecraft.getTextureManager().bindTexture(textureMap.get(part.partName));
+    			}else{
+    				minecraft.getTextureManager().bindTexture(textureMap.get(vehicle.vehicleName));
     			}
+    			
+    			//Get basic rotation properties and start the matrix.
+    			Vec3d actionRotation = part.getActionRotation(partialTicks);
+    			GL11.glPushMatrix();
     			
     			//If we are a tread, do the tread-specific render.
         		//Otherwise render like all other parts.
         		if(part instanceof PartGroundDeviceTread){
+        			//We need to manually do x translation here before rotating to prevent incorrect translation.
+        			GL11.glTranslated(part.offset.x, 0, 0);
+        			rotatePart(part, actionRotation, true);
         			if(part.packVehicleDef.treadZPoints != null){
         				doManualTreadRender((PartGroundDeviceTread) part, partialTicks, partDisplayLists.get(partModelLocation));	
         			}else{
@@ -571,9 +581,9 @@ public final class RenderVehicle extends Render<EntityVehicleE_Powered>{
 	    			//Note that if the part's parent has a rotation, use that to transform
 	    			//the translation to match that rotation.  Needed for things like
 	    			//tank turrets with seats or guns.
-	    			Vec3d actionRotation = part.getActionRotation(partialTicks);
-	    			GL11.glPushMatrix();
+	    			
 	    			if(part.parentPart != null && !part.parentPart.getActionRotation(partialTicks).equals(Vec3d.ZERO)){
+	    				//TODO play around with this to see if we need the math or we can use partPos.
 	    				Vec3d parentActionRotation = part.parentPart.getActionRotation(partialTicks);
 	    				Vec3d partRelativeOffset = part.offset.subtract(part.parentPart.offset);
 	    				Vec3d partTranslationOffset = part.parentPart.offset.add(RotationSystem.getRotatedPoint(partRelativeOffset, (float) parentActionRotation.x, (float) parentActionRotation.y, (float) parentActionRotation.z));
@@ -598,10 +608,9 @@ public final class RenderVehicle extends Render<EntityVehicleE_Powered>{
 	    				GL11.glEnd();
 	    				GL11.glPopMatrix();
 	    			}
-	    			
-	    			GL11.glCullFace(GL11.GL_BACK);
-	    			GL11.glPopMatrix();
     			}
+        		GL11.glCullFace(GL11.GL_BACK);
+        		GL11.glPopMatrix();
     		}
         }
 	}
@@ -678,13 +687,18 @@ public final class RenderVehicle extends Render<EntityVehicleE_Powered>{
 			}
 		}
 		
-		GL11.glRotated(part.partRotation.x, 1, 0, 0);
-		GL11.glRotated(part.partRotation.y, 0, 1, 0);
-		GL11.glRotated(part.partRotation.z, 0, 0, 1);
+		if(!part.partRotation.equals(Vec3d.ZERO)){
+			GL11.glRotated(part.partRotation.x, 1, 0, 0);
+			GL11.glRotated(part.partRotation.y, 0, 1, 0);
+			GL11.glRotated(part.partRotation.z, 0, 0, 1);
+		}
 
-		GL11.glRotated(actionRotation.x, 1, 0, 0);
-		GL11.glRotated(-actionRotation.y, 0, 1, 0);
-		GL11.glRotated(actionRotation.z, 0, 0, 1);
+		if(!actionRotation.equals(Vec3d.ZERO)){
+			//Need to rotate in reverse order, otherwise guns are off.
+			GL11.glRotated(actionRotation.z, 0, 0, 1);
+			GL11.glRotated(-actionRotation.y, 0, 1, 0);
+			GL11.glRotated(actionRotation.x, 1, 0, 0);
+		}
 	}
 	
 	private static void doManualTreadRender(PartGroundDeviceTread treadPart, float partialTicks, int displayListIndex){
@@ -800,7 +814,7 @@ public final class RenderVehicle extends Render<EntityVehicleE_Powered>{
 		float treadMovementPercentage = (float) ((treadPart.angularPosition + treadPart.angularVelocity*partialTicks)*treadPart.getHeight()/Math.PI%treadPart.pack.tread.spacing/treadPart.pack.tread.spacing);
 		GL11.glPushMatrix();
 		//First translate to the initial point.
-		GL11.glTranslated(treadPart.offset.x, treadPart.offset.y + treadPart.packVehicleDef.treadYPoints[0], treadPart.offset.z + treadPart.packVehicleDef.treadZPoints[0]);
+		GL11.glTranslated(0, treadPart.offset.y + treadPart.packVehicleDef.treadYPoints[0], treadPart.offset.z + treadPart.packVehicleDef.treadZPoints[0]);
 		//Next use the deltas to get the amount needed to translate and rotate each link.
 		for(Float[] point : deltas){
 			if(point[2] != 0){
@@ -950,6 +964,38 @@ public final class RenderVehicle extends Render<EntityVehicleE_Powered>{
 				rollers[i] = parsedRollers.get(i);
 			}
 			
+			//We need to ensure the endpoints are all angle-aligned.
+			//It's possible to have a start angle of -181 and end angle of
+			//181, which is really just 2 degress of angle (179-181).
+			//To do this, we set the end angle of roller 0 and start
+			//angle of roller 1 to be around 180, or downward-facing.
+			//From there, we add angles to align things.
+			//At the end, we should have an end angle of 540, or 180 + 360.
+			rollers[0].endAngle = 180;
+			for(int i=1; i<rollers.length; ++i){
+				TreadRoller roller = rollers[i];
+				roller.startAngle = rollers[i - 1].endAngle;
+				//End angle should be 0-360 greater than start angle, or within
+				//10 degrees less, as is the case for concave rollers. 
+				while(roller.endAngle < roller.startAngle - 10){
+					roller.endAngle += 360;
+				}
+				while(roller.endAngle > roller.startAngle + 360){
+					roller.endAngle += 360;
+				}
+			}
+			//Set the end angle of the last roller, or start angle of the first roller, manually.
+			//Need to get it between the value of 360 + 0-180 as that's where we will connect.
+			while(rollers[0].startAngle < 0){
+				rollers[0].startAngle += 360;
+			}
+			if(rollers[0].startAngle > 180){
+				rollers[0].startAngle -= 360;
+			}
+			rollers[0].startAngle += 360;
+			rollers[rollers.length - 1].endAngle = rollers[0].startAngle;
+			
+			
 			//Now that the endpoints are set, we can calculate the path.
 			//Do this by following the start and end points at small increments.
 			points = new ArrayList<Double[]>();
@@ -1051,7 +1097,6 @@ public final class RenderVehicle extends Render<EntityVehicleE_Powered>{
 		double angleDelta = point[2] - priorPoint[2];
 		
 		GL11.glPushMatrix();
-		GL11.glTranslated(treadPart.offset.x, 0, 0);
 		GL11.glTranslated(0, point[0] - yDelta, point[1] - zDelta);
 		for(int i=0; i<points.size() - 1; ++i){
 			//Update variables, except for point 0 as we've already calculated it.
