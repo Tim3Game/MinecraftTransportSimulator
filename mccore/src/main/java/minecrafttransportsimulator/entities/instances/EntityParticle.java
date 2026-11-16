@@ -343,6 +343,10 @@ public class EntityParticle extends AEntityC_Renderable {
         this.killBadParticle = false;
     }
 
+    public AEntityC_Renderable getSpawningEntity() {
+        return entitySpawning;
+    }
+
     public static void setPointToSpawn(Point3D origin, RotationMatrix orientation, Point3D definitionOffset, Point3D scale, AnimationSwitchbox spawningSwitchbox, Point3D pointToSet) {
         //Apply transforms to get position.
         if (definitionOffset != null) {

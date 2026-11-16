@@ -1042,6 +1042,9 @@ public class WrapperWorld extends AWrapperWorld {
         //Note that the client world never calls this method: to do client ticks we need to use the client interface.
         if (!event.getLevel().isClientSide() && event.getLevel().equals(world)) {
             tickAll(true);
+            if (FlashbackCompat.isReplayServerLevel(world)) {
+                return;
+            }
 
             for (Player mcPlayer : event.getLevel().players()) {
                 UUID playerUUID = mcPlayer.getUUID();
